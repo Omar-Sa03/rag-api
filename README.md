@@ -178,6 +178,3 @@ Once the server is running, visit:
 - **No rate limiting**: API endpoints have no request throttling
 - **Model dependency**: Tied to Ollama's tinyllama model; changing models requires code modification
 
-## License
-
-[Specify your license here]

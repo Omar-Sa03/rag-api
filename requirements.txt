@@ -7,3 +7,5 @@ pdfplumber
 python-docx
 langchain-text-splitters
 python-multipart
+rank-bm25
+sentence-transformers

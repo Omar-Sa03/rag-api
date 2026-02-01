@@ -17,6 +17,9 @@ Traditional keyword-based search systems often fail to capture semantic meaning 
 - **Document Processing**: Support for PDF, DOCX, and Markdown file formats
 - **Smart Chunking**: Multiple chunking strategies (recursive, semantic, PDF page-aware)
 - **Metadata Preservation**: Track source, page numbers, and sections for each chunk
+- **Hybrid Search**: Combines Dense Vector Search with BM25 Keyword Search
+- **RRF Fusion**: Combines search results using Reciprocal Rank Fusion
+- **Cross-Encoder Re-ranking**: High-precision re-ranking layer for better accuracy
 - **Dynamic Knowledge Base**: Add new documents to the knowledge base via API endpoints
 - **Vector-Based Retrieval**: Uses ChromaDB for efficient similarity search
 - **LLM-Powered Answers**: Generates contextual answers using Ollama's tinyllama model
@@ -99,6 +102,8 @@ Traditional keyword-based search systems often fail to capture semantic meaning 
    - python-docx (DOCX processing)
    - langchain-text-splitters (chunking)
    - python-multipart (file uploads)
+   - rank-bm25 (keyword search)
+   - sentence-transformers (re-ranking)
 
 4. **Ensure Ollama is running and tinyllama model is available**:
    ```bash

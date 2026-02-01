@@ -36,6 +36,12 @@ db/
 *.sqlite
 *.sqlite3
 
+# Uploaded files and test documents
+uploads/
+test_docs/
+*.pdf
+*.docx
+
 # Environment variables
 .env
 .env.local

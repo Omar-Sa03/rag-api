@@ -14,6 +14,9 @@ Traditional keyword-based search systems often fail to capture semantic meaning 
 ## Key Features
 
 - **Semantic Query Processing**: Query the knowledge base using natural language questions
+- **Document Processing**: Support for PDF, DOCX, and Markdown file formats
+- **Smart Chunking**: Multiple chunking strategies (recursive, semantic, PDF page-aware)
+- **Metadata Preservation**: Track source, page numbers, and sections for each chunk
 - **Dynamic Knowledge Base**: Add new documents to the knowledge base via API endpoints
 - **Vector-Based Retrieval**: Uses ChromaDB for efficient similarity search
 - **LLM-Powered Answers**: Generates contextual answers using Ollama's tinyllama model
@@ -85,8 +88,17 @@ Traditional keyword-based search systems often fail to capture semantic meaning 
 
 3. **Install dependencies**:
    ```bash
-   pip install fastapi uvicorn chromadb ollama
+   pip install -r requirements.txt
    ```
+   
+   This will install:
+   - fastapi, uvicorn (API framework)
+   - chromadb (vector database)
+   - ollama (LLM integration)
+   - PyPDF2, pdfplumber (PDF processing)
+   - python-docx (DOCX processing)
+   - langchain-text-splitters (chunking)
+   - python-multipart (file uploads)
 
 4. **Ensure Ollama is running and tinyllama model is available**:
    ```bash
@@ -115,6 +127,20 @@ The API will be available at `http://localhost:8000`
 
 ### API Endpoints
 
+#### GET `/`
+Get API information and available endpoints.
+
+**Response**:
+```json
+{
+  "name": "RAG API",
+  "version": "2.0",
+  "description": "Retrieval-Augmented Generation API with document processing",
+  "endpoints": {...},
+  "supported_formats": [".pdf", ".docx", ".md", ".txt"]
+}
+```
+
 #### POST `/query`
 Query the knowledge base with a question.
 
@@ -128,17 +154,29 @@ Query the knowledge base with a question.
 **Response**:
 ```json
 {
-  "answer": "Kubernetes is a container orchestration platform..."
+  "answer": "Kubernetes is a container orchestration platform...",
+  "sources": [
+    {
+      "text_preview": "First 100 chars of source...",
+      "metadata": {
+        "source": "k8s.pdf",
+        "page_number": 1,
+        "chunk_index": 0
+      }
+    }
+  ]
 }
 ```
 
 #### POST `/add`
-Add new content to the knowledge base.
+Add new text content to the knowledge base.
 
 **Request**:
 ```json
 {
-  "text": "Your document content here..."
+  "text": "Your document content here...",
+  "chunk": true,
+  "strategy": "recursive"
 }
 ```
 
@@ -146,8 +184,44 @@ Add new content to the knowledge base.
 ```json
 {
   "status": "success",
-  "message": "Content added to knowledge base",
-  "id": "uuid-here"
+  "message": "Content chunked and added to knowledge base (5 chunks)",
+  "chunks": 5,
+  "ids": ["uuid1", "uuid2", ...]
+}
+```
+
+#### POST `/upload`
+Upload and process a document (PDF, DOCX, Markdown).
+
+**Request** (multipart/form-data):
+- `file`: Document file to upload
+- `strategy`: Chunking strategy ("recursive", "semantic", "pdf_page_aware")
+- `chunk_size`: Maximum chunk size in characters (default: 1000)
+- `chunk_overlap`: Overlap between chunks (default: 200)
+
+**Example using curl**:
+```bash
+curl -X POST "http://localhost:8000/upload" \
+  -F "file=@document.pdf" \
+  -F "strategy=recursive" \
+  -F "chunk_size=1000" \
+  -F "chunk_overlap=200"
+```
+
+**Response**:
+```json
+{
+  "status": "success",
+  "message": "Document processed and added to knowledge base",
+  "filename": "document.pdf",
+  "file_type": "pdf",
+  "chunks": 12,
+  "metadata": {
+    "source": "document.pdf",
+    "pages": 5,
+    "file_type": "pdf"
+  },
+  "chunk_ids": ["uuid1", "uuid2", ...]
 }
 ```
 
@@ -157,24 +231,45 @@ Once the server is running, visit:
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
+## Chunking Strategies
+
+The API supports three chunking strategies:
+
+### 1. Recursive Character Splitting (Default)
+- Splits text by paragraphs, then sentences, then characters
+- Best for general-purpose text processing
+- Preserves natural text boundaries
+
+### 2. Semantic Chunking
+- Splits text by sentences and groups them semantically
+- Better for question-answering tasks
+- Maintains sentence coherence
+
+### 3. PDF Page-Aware Chunking
+- Preserves PDF page boundaries
+- Chunks within each page using recursive splitting
+- Maintains page number metadata for citations
+
+All strategies support configurable chunk size and overlap for context preservation.
+
 ## Assumptions and Limitations
 
 ### Assumptions
 
 - Ollama service is running locally and accessible
 - tinyllama model is pre-downloaded and available
-- Documents are provided as plain text (no preprocessing for PDFs, markdown, etc.)
 - Single ChromaDB collection is sufficient for the use case
 - Local file system storage is acceptable (ChromaDB persistent client)
+- Uploaded files are temporarily stored during processing
 
 ### Limitations
 
 - **No authentication/authorization**: API endpoints are publicly accessible
-- **Single result retrieval**: Currently returns only the top 1 most similar document
-- **No document chunking**: Large documents are stored as single entries, which may impact retrieval quality
+- **Multiple result retrieval**: Returns top 3 most similar chunks (configurable)
 - **No metadata filtering**: Cannot filter queries by document metadata or categories
 - **Local-only deployment**: Designed for local development; not configured for production deployment
 - **Error handling**: Basic error handling; may not cover all edge cases
 - **No rate limiting**: API endpoints have no request throttling
 - **Model dependency**: Tied to Ollama's tinyllama model; changing models requires code modification
+- **File size limits**: No explicit file size limits; large files may cause memory issues
 

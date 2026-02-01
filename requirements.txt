@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+chromadb
+ollama
+PyPDF2
+pdfplumber
+python-docx
+langchain-text-splitters
+python-multipart

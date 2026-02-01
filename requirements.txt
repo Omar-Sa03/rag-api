@@ -9,3 +9,6 @@ langchain-text-splitters
 python-multipart
 rank-bm25
 sentence-transformers
+slowapi
+structlog
+prometheus-fastapi-instrumentator

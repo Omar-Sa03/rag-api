@@ -4,13 +4,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from prometheus_fastapi_instrumentator import Instrumentator
+from starlette.staticfiles import StaticFiles
 import structlog
 import time
 
-from logging_utils import configure_logging
-from exceptions import RAGException
-from api_v1 import router as api_v1_router
-from limiter import limiter
+from rag_api.core.logging_utils import configure_logging
+from rag_api.core.exceptions import RAGException
+from rag_api.core.limiter import limiter
+from rag_api.api.v1.router import router as api_v1_router
+from rag_api.ui.routes import router as ui_router, UI_STATIC_DIR
 
 # Configure logging
 configure_logging()
@@ -23,6 +25,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Static assets for the Web UI
+app.mount("/static", StaticFiles(directory=str(UI_STATIC_DIR)), name="static")
 
 # --- Middleware ---
 
@@ -82,6 +87,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # --- Routers ---
 
+app.include_router(ui_router, tags=["ui"])
 app.include_router(api_v1_router, prefix="/v1", tags=["v1"])
 # For now, V2 can point to V1 or be a separate router
 app.include_router(api_v1_router, prefix="/v2", tags=["v2"])

@@ -1,4 +1,3 @@
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from rag_api.core.limiter import limiter
 
-limiter = Limiter(key_func=get_remote_address)
+__all__ = ["limiter"]

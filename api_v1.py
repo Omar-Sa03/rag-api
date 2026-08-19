@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, Form, Request, BackgroundTasks
 from typing import Optional
 import uuid
+import time
 import structlog
 import ollama
 
@@ -14,6 +15,14 @@ from exceptions import (
     DocumentProcessingError, VectorDBError, LLMGenerationError
 )
 from limiter import limiter
+from rag_api.core.metrics import (
+    RAG_QUERY_LATENCY,
+    RAG_RERANK_SCORE,
+    RAG_DOCUMENTS_INDEXED,
+    RAG_SEARCH_MODE,
+    RAG_LLM_ERRORS,
+    RAG_SOURCES_RETURNED,
+)
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -33,7 +42,13 @@ async def query(request: Request, body: QueryRequest):
     Query the knowledge base with hybrid search.
     """
     logger.info("query_received", query=body.q, mode=body.mode)
-    
+
+    # Track search mode usage
+    RAG_SEARCH_MODE.labels(mode=body.mode).inc()
+
+    reranked_label = "true" if body.rerank else "false"
+    query_start = time.perf_counter()
+
     try:
         # Perform hybrid search
         search_results = hybrid_search.search(
@@ -42,9 +57,13 @@ async def query(request: Request, body: QueryRequest):
             n_results=body.n_results,
             rerank=body.rerank
         )
-        
+
         if not search_results:
             logger.info("no_results_found", query=body.q)
+            RAG_SOURCES_RETURNED.observe(0)
+            RAG_QUERY_LATENCY.labels(mode=body.mode, reranked=reranked_label).observe(
+                time.perf_counter() - query_start
+            )
             return QueryResponse(
                 answer="No relevant context found in the knowledge base.",
                 sources=[],
@@ -52,14 +71,23 @@ async def query(request: Request, body: QueryRequest):
                 reranked=body.rerank,
                 total_results=0
             )
-        
+
+        # Track number of sources returned
+        RAG_SOURCES_RETURNED.observe(len(search_results))
+
+        # Observe top reranker score if available
+        if body.rerank and search_results:
+            top_score = search_results[0].get("score", search_results[0].get("rerank_score", None))
+            if top_score is not None:
+                RAG_RERANK_SCORE.observe(float(top_score))
+
         # Format results
         formatted_sources = format_search_results(search_results, include_scores=body.include_scores)
-        
+
         # Extract contexts for LLM
         contexts = [result['document'] for result in search_results]
         combined_context = "\n\n---\n\n".join(contexts)
-        
+
         # Generate answer
         try:
             response = ollama.generate(
@@ -69,7 +97,13 @@ async def query(request: Request, body: QueryRequest):
             answer = response["response"]
         except Exception as e:
             logger.error("llm_generation_failed", error=str(e))
+            RAG_LLM_ERRORS.labels(error_type=type(e).__name__).inc()
             raise LLMGenerationError(f"Failed to generate answer: {str(e)}")
+
+        # Record end-to-end latency
+        RAG_QUERY_LATENCY.labels(mode=body.mode, reranked=reranked_label).observe(
+            time.perf_counter() - query_start
+        )
 
         logger.info("query_processed", results_count=len(search_results))
         return QueryResponse(
@@ -79,7 +113,7 @@ async def query(request: Request, body: QueryRequest):
             reranked=body.rerank,
             total_results=len(search_results)
         )
-        
+
     except LLMGenerationError:
         raise
     except Exception as e:
@@ -109,7 +143,10 @@ async def add_knowledge(request: Request, body: AddKnowledgeRequest, background_
                 doc_ids.append(doc_id)
             
             background_tasks.add_task(hybrid_search.rebuild_index)
-            
+
+            # Track indexed chunks
+            RAG_DOCUMENTS_INDEXED.labels(source="add_text").inc(len(chunks))
+
             logger.info("knowledge_added", chunks=len(chunks))
             return AddKnowledgeResponse(
                 status="success",
@@ -121,7 +158,10 @@ async def add_knowledge(request: Request, body: AddKnowledgeRequest, background_
             doc_id = str(uuid.uuid4())
             collection.add(documents=[body.text], ids=[doc_id])
             background_tasks.add_task(hybrid_search.rebuild_index)
-            
+
+            # Track single document
+            RAG_DOCUMENTS_INDEXED.labels(source="add_text").inc(1)
+
             logger.info("knowledge_added_single")
             return AddKnowledgeResponse(
                 status="success",
@@ -189,7 +229,10 @@ async def upload_document(
             doc_ids.append(doc_id)
             
         hybrid_search.rebuild_index()
-        
+
+        # Track uploaded chunks
+        RAG_DOCUMENTS_INDEXED.labels(source="upload").inc(len(chunks))
+
         logger.info("upload_processed", filename=file.filename, chunks=len(chunks))
         return UploadResponse(
             status="success",

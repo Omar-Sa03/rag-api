@@ -1,31 +1,32 @@
-# RAG API
+# Company Wiki & HR Assistant API
 
-A comprehensive Retrieval-Augmented Generation (RAG) API built with FastAPI, ChromaDB, and Ollama. This service enables semantic search and question-answering over a knowledge base by combining vector similarity search, BM25 keyword search, and reciprocal rank fusion with a re-ranking layer.
+An internal **Retrieval-Augmented Generation (RAG)** API built with FastAPI, ChromaDB, and Ollama — specialized for company knowledge management. This service enables employees to search and ask questions about **company policies, benefits, onboarding guides, procedures, and organizational information** using hybrid search with re-ranking.
 
 ## Problem Statement and Motivation
 
-Traditional keyword-based search systems often fail to capture semantic meaning and context, leading to suboptimal results. This RAG API addresses this limitation by:
+Employees often struggle to find the right policy document, benefit details, or procedural guide buried across multiple internal systems. This HR Assistant API solves this by:
 
-- Enabling semantic search over unstructured text documents
-- Combining the precision of keyword search (BM25) with the recall of vector search
-- Providing context-aware question-answering capabilities
-- Allowing dynamic knowledge base updates without full system restarts
-- Offering a robust, versioned REST API with comprehensive observability
+- Providing a single, searchable knowledge base for all company documents
+- **Department-scoped search** — filter results by HR, Engineering, Finance, Legal, etc.
+- **Category-aware retrieval** — search by policy, onboarding, benefits, FAQ, and more
+- Context-aware question-answering with HR-tuned prompts and source citations
+- Dynamic knowledge base updates without system restarts
+- Professional, disclaimered responses that reference specific policy documents
 
 ## Key Features
 
+- **Department & Category Filtering**: Scope queries to specific departments and document types
+- **HR-Tuned LLM Prompts**: Professional tone with policy citations and disclaimers
 - **Advanced Hybrid Search**: Combines Dense Vector Search with BM25 Keyword Search
 - **Reciprocal Rank Fusion (RRF)**: Merges results from multiple search strategies
 - **Cross-Encoder Re-ranking**: High-precision re-ranking layer for superior relevance
-- **Semantic Query Processing**: Query the knowledge base using natural language
 - **Document Processing**: Support for PDF, DOCX, and Markdown formats
 - **Smart Chunking**: Multiple chunking strategies (recursive, semantic, PDF page-aware)
-- **API Versioning**: versioned endpoints at `/v1` and `/v2`
-- **Structured Logging**: JSON-formatted logs for better observability
+- **Policy Metadata**: Track effective dates, authors, departments, and categories
+- **Web UI**: Built-in interactive assistant interface
+- **API Versioning**: Versioned endpoints at `/v1`
 - **Observability**: Prometheus metrics (`/metrics`) and health checks (`/health`)
 - **Rate Limiting**: Protection against abuse on critical endpoints
-- **Validation**: Strict Request/Response validation using Pydantic models
-- **OpenAPI Documentation**: Fully documented API with examples
 
 ## Tech Stack
 
@@ -41,28 +42,33 @@ Traditional keyword-based search systems often fail to capture semantic meaning 
 ## Architecture
 
 ```
-┌─────────────┐
-│   Client    │
-└──────┬──────┘
-       │
-       │ HTTP POST (Rate Limited)
-       ▼
-┌─────────────────────────────────┐
-│           FastAPI App           │
-│  (Middleware: Logs, CORS, Auth) │
-└──────┬────────────────┬─────────┘
-       │                │
-       ▼                ▼
-┌──────────────┐   ┌──────────────┐
-│ Hybrid Search│   │  Re-Ranker   │
-│ (Vector+BM25)│   │(CrossEncoder)│
-└──────┬───────┘   └──────┬───────┘
-       │                  │
-       ▼                  ▼
-┌─────────────┐    ┌──────────┐
-│  ChromaDB   │    │  Ollama  │
-│ (Vector DB) │    │   (LLM)  │
-└─────────────┘    └──────────┘
+┌─────────────────┐
+│    Employee      │
+│  (Web UI / API)  │
+└────────┬─────────┘
+         │
+         │ HTTP POST (Rate Limited)
+         ▼
+┌──────────────────────────────────────┐
+│         FastAPI App                  │
+│  (Middleware: Logs, CORS, Auth)      │
+│  Title: Company Wiki & HR Assistant  │
+└────────┬───────────────────┬─────────┘
+         │                   │
+         ▼                   ▼
+┌────────────────┐   ┌──────────────┐
+│ Hybrid Search  │   │  HR-Tuned    │
+│ (Vector + BM25)│   │  LLM Prompt  │
+│ + Dept/Cat     │   │  + Disclaimer│
+│   Filters      │   │(CrossEncoder)│
+└────────┬───────┘   └──────┬───────┘
+         │                  │
+         ▼                  ▼
+┌──────────────┐    ┌──────────┐
+│  ChromaDB    │    │  Ollama  │
+│ (company_wiki│    │   (LLM)  │
+│  collection) │    │          │
+└──────────────┘    └──────────┘
 ```
 
 ## How to Run
@@ -108,6 +114,7 @@ uvicorn app:app --reload
 ```
 
 The API will be available at `http://localhost:8000`.
+The Web UI (HR Assistant) is served at the root `/`.
 
 ### API Endpoints
 
@@ -116,9 +123,9 @@ The API is versioned. The current stable version is `v1`.
 #### Core Endpoints
 
 - `GET /v1/`: API Information
-- `POST /v1/query`: Hybrid search with LLM generation
-- `POST /v1/add`: Add raw text content
-- `POST /v1/upload`: Upload and process files
+- `POST /v1/query`: Search company knowledge base with department/category filters
+- `POST /v1/add`: Add text content with department, category, and metadata
+- `POST /v1/upload`: Upload and process documents (PDF/DOCX/MD/TXT)
 - `POST /v1/rebuild-index`: Manually rebuild BM25 index
 
 #### Observability & Management
@@ -130,26 +137,44 @@ The API is versioned. The current stable version is `v1`.
 
 ### Example Usage
 
-#### Querying (Hybrid Search)
+#### Querying (with Department Filter)
 
 ```json
 POST /v1/query
 {
-  "q": "What is Kubernetes?",
+  "q": "What is our PTO policy?",
   "mode": "hybrid",
   "n_results": 5,
-  "rerank": true
+  "rerank": true,
+  "department": "hr",
+  "category": "policy"
 }
 ```
 
 **Response**:
 ```json
 {
-  "answer": "Kubernetes is a container orchestration platform...",
+  "answer": "According to the PTO Policy, full-time employees accrue 15 days of paid time off per year...",
   "sources": [...],
   "search_mode": "hybrid",
   "reranked": true,
-  "total_results": 5
+  "total_results": 5,
+  "department_filter": "hr",
+  "category_filter": "policy",
+  "disclaimer": "This information is provided for reference only. For official decisions, please contact your HR representative or department lead."
+}
+```
+
+#### Adding Knowledge
+
+```json
+POST /v1/add
+{
+  "text": "Remote Work Policy: Employees may work remotely up to 3 days per week with manager approval...",
+  "department": "hr",
+  "category": "policy",
+  "author": "HR Team",
+  "effective_date": "2026-01-01"
 }
 ```
 
@@ -159,9 +184,36 @@ POST /v1/query
 curl -X POST "http://localhost:8000/v1/upload" \
   -H "accept: application/json" \
   -H "Content-Type: multipart/form-data" \
-  -F "file=@manual.pdf" \
-  -F "strategy=recursive"
+  -F "file=@employee_handbook.pdf" \
+  -F "strategy=recursive" \
+  -F "department=hr" \
+  -F "category=handbook"
 ```
+
+### Departments
+
+| Value | Description |
+|-------|-------------|
+| `hr` | Human Resources |
+| `engineering` | Engineering |
+| `finance` | Finance |
+| `legal` | Legal |
+| `operations` | Operations |
+| `marketing` | Marketing |
+| `all` | Search across all departments (query only) |
+
+### Document Categories
+
+| Value | Description |
+|-------|-------------|
+| `policy` | Company policies (PTO, remote work, etc.) |
+| `onboarding` | New hire onboarding guides |
+| `benefits` | Benefits information (health, 401k, etc.) |
+| `org-chart` | Organizational charts and team structure |
+| `handbook` | Employee handbooks |
+| `procedure` | Standard operating procedures |
+| `faq` | Frequently asked questions |
+| `announcement` | Company announcements |
 
 ## Assumptions and Limitations
 
@@ -171,3 +223,4 @@ curl -X POST "http://localhost:8000/v1/upload" \
   - `/query`: 10 requests/minute
   - `/add` & `/upload`: 5 requests/minute
 - **Auth**: No authentication enabled by default (add JWT/OAuth for production).
+- **Disclaimer**: All responses include a disclaimer — this is an assistant, not a legal authority.

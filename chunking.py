@@ -223,7 +223,8 @@ class ChunkingManager:
     STRATEGIES = {
         'recursive': RecursiveChunker,
         'semantic': SemanticChunker,
-        'pdf_page_aware': PDFPageChunker
+        'pdf_page_aware': PDFPageChunker,
+        'paragraph': RecursiveChunker,
     }
     
     def __init__(self, strategy: str = 'recursive', chunk_size: int = 1000, chunk_overlap: int = 200):

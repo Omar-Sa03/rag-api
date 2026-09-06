@@ -11,7 +11,7 @@ print("Initializing services...")
 os.makedirs("./db", exist_ok=True)
 
 chroma = chromadb.PersistentClient(path="./db")
-collection = chroma.get_or_create_collection(name="docs")
+collection = chroma.get_or_create_collection(name="company_wiki")
 
 doc_processor = DocumentProcessor()
 # Default chunking manager - endpoints might create their own if parameters differ

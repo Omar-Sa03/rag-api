@@ -66,21 +66,35 @@ class HybridSearchEngine:
         
         print(f"BM25 index built with {len(self.documents)} documents")
     
-    def vector_search(self, query: str, n_results: int = 10) -> List[Dict]:
+    def vector_search(self, query: str, n_results: int = 10, filters: dict = None) -> List[Dict]:
         """
         Perform vector similarity search using ChromaDB.
         
         Args:
             query: Search query
             n_results: Number of results to return
+            filters: Optional metadata filters (e.g. {"department": "hr"})
             
         Returns:
             List of search results with scores
         """
-        results = self.collection.query(
-            query_texts=[query],
-            n_results=n_results
-        )
+        query_kwargs = {
+            "query_texts": [query],
+            "n_results": n_results,
+        }
+        
+        # Build ChromaDB where clause from filters
+        if filters:
+            where_conditions = {k: v for k, v in filters.items() if v is not None}
+            if where_conditions:
+                if len(where_conditions) == 1:
+                    query_kwargs["where"] = where_conditions
+                else:
+                    query_kwargs["where"] = {
+                        "$and": [{k: v} for k, v in where_conditions.items()]
+                    }
+        
+        results = self.collection.query(**query_kwargs)
         
         search_results = []
         
@@ -97,13 +111,14 @@ class HybridSearchEngine:
         
         return search_results
     
-    def bm25_search(self, query: str, n_results: int = 10) -> List[Dict]:
+    def bm25_search(self, query: str, n_results: int = 10, filters: dict = None) -> List[Dict]:
         """
         Perform BM25 keyword search.
         
         Args:
             query: Search query
             n_results: Number of results to return
+            filters: Optional metadata filters (e.g. {"department": "hr"})
             
         Returns:
             List of search results with scores
@@ -120,20 +135,36 @@ class HybridSearchEngine:
         # Get BM25 scores
         scores = self.bm25_index.get_scores(tokenized_query)
         
-        # Get top N results
-        top_indices = np.argsort(scores)[::-1][:n_results]
+        # Get top N results (fetch extra to allow for post-filtering)
+        fetch_count = n_results * 3 if filters else n_results
+        top_indices = np.argsort(scores)[::-1][:fetch_count]
         
         search_results = []
         for rank, idx in enumerate(top_indices, 1):
             if scores[idx] > 0:  # Only include results with positive scores
+                metadata = self.metadatas[idx] if idx < len(self.metadatas) else {}
+                
+                # Post-filter by metadata if filters provided
+                if filters:
+                    skip = False
+                    for fk, fv in filters.items():
+                        if fv is not None and metadata.get(fk) != fv:
+                            skip = True
+                            break
+                    if skip:
+                        continue
+                
                 result = {
                     'id': self.doc_ids[idx],
                     'document': self.documents[idx],
                     'score': float(scores[idx]),
-                    'metadata': self.metadatas[idx] if idx < len(self.metadatas) else {},
-                    'rank': rank
+                    'metadata': metadata,
+                    'rank': len(search_results) + 1
                 }
                 search_results.append(result)
+                
+                if len(search_results) >= n_results:
+                    break
         
         return search_results
     
@@ -230,7 +261,8 @@ class HybridSearchEngine:
                query: str,
                mode: str = "hybrid",
                n_results: int = 10,
-               rerank: bool = True) -> List[Dict]:
+               rerank: bool = True,
+               filters: dict = None) -> List[Dict]:
         """
         Perform search with specified mode.
         
@@ -239,22 +271,23 @@ class HybridSearchEngine:
             mode: Search mode - "vector", "bm25", or "hybrid"
             n_results: Number of results to return
             rerank: Whether to apply re-ranking
+            filters: Optional metadata filters (e.g. {"department": "hr", "category": "policy"})
             
         Returns:
             Search results
         """
         if mode == "vector":
             # Vector-only search
-            results = self.vector_search(query, n_results * 2)
+            results = self.vector_search(query, n_results * 2, filters=filters)
             
         elif mode == "bm25":
             # BM25-only search
-            results = self.bm25_search(query, n_results * 2)
+            results = self.bm25_search(query, n_results * 2, filters=filters)
             
         elif mode == "hybrid":
             # Hybrid search with RRF
-            vector_results = self.vector_search(query, n_results * 2)
-            bm25_results = self.bm25_search(query, n_results * 2)
+            vector_results = self.vector_search(query, n_results * 2, filters=filters)
+            bm25_results = self.bm25_search(query, n_results * 2, filters=filters)
             results = self.reciprocal_rank_fusion(vector_results, bm25_results)
             
         else:

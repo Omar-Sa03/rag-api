@@ -19,8 +19,8 @@ configure_logging()
 logger = structlog.get_logger()
 
 app = FastAPI(
-    title="RAG API",
-    description="Retrieval-Augmented Generation API with hybrid search and re-ranking",
+    title="Company Wiki & HR Assistant API",
+    description="Internal knowledge base API for company policies, benefits, onboarding, and organizational information. Powered by hybrid search with re-ranking.",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"

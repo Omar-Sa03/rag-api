@@ -3,167 +3,311 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RAG Studio</title>
+    <title>Company Assistant</title>
+    <meta name="description" content="Internal company knowledge assistant. Ask questions about policies, benefits, onboarding, and procedures." />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <style>
-      html, body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-      .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,0.08); }
-      .grid-bg { background-image: radial-gradient(rgba(255,255,255,0.10) 1px, transparent 1px); background-size: 18px 18px; }
-      .shadow-soft { box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
-    </style>
+    <link rel="stylesheet" href="/static/style.css" />
   </head>
-  <body class="min-h-screen bg-slate-950 text-slate-100">
-    <div class="absolute inset-0 overflow-hidden">
-      <div class="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl"></div>
-      <div class="absolute top-20 -right-40 h-[36rem] w-[36rem] rounded-full bg-cyan-400/20 blur-3xl"></div>
-      <div class="absolute bottom-[-200px] left-1/3 h-[42rem] w-[42rem] rounded-full bg-emerald-400/10 blur-3xl"></div>
-      <div class="absolute inset-0 grid-bg opacity-40"></div>
-    </div>
+  <body class="flex flex-col h-screen overflow-hidden bg-[#0A0A0F] text-[#FAFAFA] antialiased relative selection:bg-amber-500/20 selection:text-amber-200">
+    
+    <!-- Atmospheric Ambient Orbs -->
+    <div class="ambient-orb-top"></div>
+    <div class="ambient-orb-bottom"></div>
 
-    <main class="relative mx-auto max-w-6xl px-4 py-10">
-      <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
-            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
-            <span id="statusText">Connected to API</span>
+    <!-- Clean Top Navigation Header -->
+    <header class="flex-shrink-0 z-20 border-b border-white/[0.08] bg-[#0A0A0F]/80 backdrop-blur-md px-4 sm:px-6 py-3">
+      <div class="max-w-4xl mx-auto flex items-center justify-between">
+        
+        <!-- Assistant Identity -->
+        <div class="flex items-center gap-3">
+          <div class="relative w-9 h-9 rounded-full bg-[#1A1A24] border border-white/[0.1] flex items-center justify-center text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#0A0A0F]"></span>
           </div>
-          <h1 class="mt-4 text-3xl font-semibold tracking-tight">RAG Studio</h1>
-          <p class="mt-2 max-w-2xl text-slate-300">
-            Hybrid retrieval + re-ranking with an interactive workspace. Query your knowledge base, inspect sources, and add new documents.
-          </p>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button id="btnHealth" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10">Health</button>
-          <a href="/docs" target="_blank" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10">Docs</a>
-        </div>
-      </header>
-
-      <section class="mt-8 grid gap-6 lg:grid-cols-5">
-        <div class="glass shadow-soft rounded-2xl border border-white/10 p-5 lg:col-span-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-base font-semibold">Ask</h2>
-            <div class="text-xs text-slate-300" id="latency"></div>
-          </div>
-
-          <div class="mt-4 grid gap-3">
-            <label class="text-sm text-slate-300" for="queryInput">Question</label>
-            <textarea id="queryInput" rows="4" class="w-full resize-none rounded-xl border border-white/10 bg-black/30 p-3 text-sm outline-none ring-0 focus:border-cyan-300/40" placeholder="e.g. What is Kubernetes?"></textarea>
-
-            <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <div class="col-span-1">
-                <label class="text-sm text-slate-300" for="modeSelect">Mode</label>
-                <select id="modeSelect" class="mt-1 w-full rounded-xl border border-white/10 bg-black/30 p-2 text-sm outline-none focus:border-cyan-300/40">
-                  <option value="hybrid" selected>Hybrid</option>
-                  <option value="vector">Vector</option>
-                  <option value="bm25">BM25</option>
-                </select>
-              </div>
-              <div class="col-span-1">
-                <label class="text-sm text-slate-300" for="nResults">Top K</label>
-                <input id="nResults" type="number" min="1" max="20" value="5" class="mt-1 w-full rounded-xl border border-white/10 bg-black/30 p-2 text-sm outline-none focus:border-cyan-300/40" />
-              </div>
-              <div class="col-span-1">
-                <label class="text-sm text-slate-300">Re-rank</label>
-                <button id="toggleRerank" class="mt-1 w-full rounded-xl border border-white/10 bg-emerald-400/10 p-2 text-sm hover:bg-emerald-400/15">On</button>
-              </div>
-              <div class="col-span-1">
-                <label class="text-sm text-slate-300">Scores</label>
-                <button id="toggleScores" class="mt-1 w-full rounded-xl border border-white/10 bg-cyan-400/10 p-2 text-sm hover:bg-cyan-400/15">On</button>
-              </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-display font-semibold text-sm sm:text-base text-white tracking-tight">Company Assistant</h1>
             </div>
-
-            <div class="mt-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <button id="btnQuery" class="rounded-xl bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-soft hover:opacity-95">
-                Run Query
-              </button>
-              <div class="text-xs text-slate-400" id="hint">Tip: press Ctrl+Enter to run</div>
-            </div>
-          </div>
-
-          <div class="mt-5">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-semibold">Answer</h3>
-              <div class="flex gap-2">
-                <button id="btnCopy" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs hover:bg-white/10">Copy</button>
-                <button id="btnRaw" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs hover:bg-white/10">Raw JSON</button>
-              </div>
-            </div>
-            <div id="answerBox" class="mt-2 whitespace-pre-wrap rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-slate-100 min-h-[96px]"></div>
-            <pre id="rawBox" class="mt-2 hidden overflow-auto rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-slate-200 max-h-64"></pre>
+            <p class="text-xs text-zinc-400 flex items-center gap-1.5" id="systemStatus">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>Online • Ready to help with company questions</span>
+            </p>
           </div>
         </div>
 
-        <div class="glass shadow-soft rounded-2xl border border-white/10 p-5 lg:col-span-2">
-          <h2 class="text-base font-semibold">Sources</h2>
-          <p class="mt-1 text-xs text-slate-300">Click a source to expand. Useful for debugging retrieval and re-ranking.</p>
-          <div id="sources" class="mt-4 space-y-3"></div>
-        </div>
-      </section>
-
-      <section class="mt-6 grid gap-6 lg:grid-cols-2">
-        <div class="glass shadow-soft rounded-2xl border border-white/10 p-5">
-          <h2 class="text-base font-semibold">Add Knowledge</h2>
-          <p class="mt-1 text-xs text-slate-300">Add text directly to your vector store and rebuild BM25 index.</p>
-          <label class="mt-4 block text-sm text-slate-300" for="addText">Text</label>
-          <textarea id="addText" rows="6" class="mt-1 w-full resize-none rounded-xl border border-white/10 bg-black/30 p-3 text-sm outline-none focus:border-fuchsia-300/40" placeholder="Paste text to add..."></textarea>
-          <div class="mt-3 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2 text-xs text-slate-300">
-              <input id="addChunk" type="checkbox" class="h-4 w-4" checked />
-              <label for="addChunk">Chunk text</label>
-            </div>
-            <select id="addStrategy" class="rounded-xl border border-white/10 bg-black/30 p-2 text-sm outline-none">
-              <option value="recursive" selected>Recursive</option>
-              <option value="semantic">Semantic</option>
-              <option value="pdf_page_aware">PDF Page Aware</option>
+        <!-- Controls -->
+        <div class="flex items-center gap-2.5">
+          
+          <!-- Department Filter -->
+          <div class="relative hidden sm:block">
+            <select id="deptScopeSelect" class="appearance-none bg-[#12121A] text-xs text-zinc-300 border border-white/[0.08] hover:border-white/[0.15] rounded-lg pl-3 pr-7 py-2 outline-none cursor-pointer transition-colors">
+              <option value="">All Departments</option>
+              <option value="hr">HR & Benefits</option>
+              <option value="engineering">Engineering</option>
+              <option value="finance">Finance & Payroll</option>
+              <option value="legal">Legal & Compliance</option>
+              <option value="operations">Operations</option>
+              <option value="marketing">Marketing</option>
             </select>
-          </div>
-          <button id="btnAdd" class="mt-4 w-full rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/15">Add</button>
-          <div id="addResult" class="mt-3 text-xs text-slate-300"></div>
-        </div>
-
-        <div class="glass shadow-soft rounded-2xl border border-white/10 p-5">
-          <h2 class="text-base font-semibold">Upload Document</h2>
-          <p class="mt-1 text-xs text-slate-300">Upload PDF/DOCX/MD/TXT and chunk it into the knowledge base.</p>
-
-          <div class="mt-4 grid gap-3">
-            <input id="fileInput" type="file" class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-white/15" />
-
-            <div class="grid grid-cols-3 gap-3">
-              <div>
-                <label class="text-sm text-slate-300">Strategy</label>
-                <select id="upStrategy" class="mt-1 w-full rounded-xl border border-white/10 bg-black/30 p-2 text-sm outline-none">
-                  <option value="recursive" selected>Recursive</option>
-                  <option value="semantic">Semantic</option>
-                  <option value="pdf_page_aware">PDF Page Aware</option>
-                </select>
-              </div>
-              <div>
-                <label class="text-sm text-slate-300">Chunk</label>
-                <input id="upChunkSize" type="number" value="1000" min="100" class="mt-1 w-full rounded-xl border border-white/10 bg-black/30 p-2 text-sm outline-none" />
-              </div>
-              <div>
-                <label class="text-sm text-slate-300">Overlap</label>
-                <input id="upOverlap" type="number" value="200" min="0" class="mt-1 w-full rounded-xl border border-white/10 bg-black/30 p-2 text-sm outline-none" />
-              </div>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-500">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
+          </div>
 
-            <button id="btnUpload" class="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/15">Upload</button>
-            <div id="uploadResult" class="text-xs text-slate-300"></div>
+          <!-- Upload Document Button -->
+          <button id="btnOpenUpload" class="btn-subtle px-3 py-1.5 text-xs flex items-center gap-1.5" title="Add a document to knowledge base">
+            <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <span class="hidden sm:inline">Upload Doc</span>
+          </button>
+
+          <!-- New Chat Button -->
+          <button id="btnNewChat" class="btn-subtle px-3 py-1.5 text-xs flex items-center gap-1.5" title="Start a fresh conversation">
+            <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span class="hidden sm:inline">New Chat</span>
+          </button>
+
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Chat Message Stream -->
+    <main id="chatMessages" class="flex-1 overflow-y-auto px-4 sm:px-6 py-8 relative z-10">
+      <div class="max-w-3xl mx-auto space-y-6">
+
+        <!-- Welcome State (Clean, Approchable, Normal Chatbot) -->
+        <div id="welcomeState" class="py-8 sm:py-12 text-center max-w-xl mx-auto">
+          
+          <div class="w-12 h-12 rounded-2xl bg-[#1A1A24] border border-white/[0.1] text-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.15)] flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+
+          <h2 class="font-display font-semibold text-2xl sm:text-3xl text-white tracking-tight">
+            How can I help you today?
+          </h2>
+          
+          <p class="mt-2 text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
+            Ask me any question about company policies, health insurance, paid time off, or workplace procedures.
+          </p>
+
+          <!-- Friendly Suggestion Prompt Cards (No emojis) -->
+          <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+            
+            <button class="prompt-card group">
+              <div class="flex items-center justify-between text-xs text-zinc-400 mb-1">
+                <span class="font-medium text-zinc-300 group-hover:text-amber-400 transition-colors">Vacation & Time Off</span>
+                <svg class="w-3.5 h-3.5 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <p class="text-xs text-zinc-400">What is our PTO and vacation policy?</p>
+            </button>
+
+            <button class="prompt-card group">
+              <div class="flex items-center justify-between text-xs text-zinc-400 mb-1">
+                <span class="font-medium text-zinc-300 group-hover:text-amber-400 transition-colors">Health & Benefits</span>
+                <svg class="w-3.5 h-3.5 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <p class="text-xs text-zinc-400">How do I enroll in health insurance?</p>
+            </button>
+
+            <button class="prompt-card group">
+              <div class="flex items-center justify-between text-xs text-zinc-400 mb-1">
+                <span class="font-medium text-zinc-300 group-hover:text-amber-400 transition-colors">Workplace Policy</span>
+                <svg class="w-3.5 h-3.5 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <p class="text-xs text-zinc-400">What is the remote work policy?</p>
+            </button>
+
+            <button class="prompt-card group">
+              <div class="flex items-center justify-between text-xs text-zinc-400 mb-1">
+                <span class="font-medium text-zinc-300 group-hover:text-amber-400 transition-colors">Retirement & Savings</span>
+                <svg class="w-3.5 h-3.5 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <p class="text-xs text-zinc-400">How does company 401(k) matching work?</p>
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- Dynamic Messages Container -->
+        <div id="messagesList" class="space-y-6"></div>
+
+        <!-- Typing Indicator -->
+        <div id="typingIndicator" class="hidden flex items-start gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#1A1A24] border border-white/[0.1] flex items-center justify-center text-amber-500 flex-shrink-0 mt-0.5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+          </div>
+          <div class="glass-card px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-2 text-xs text-zinc-400">
+            <span>Searching company documents</span>
+            <div class="flex items-center gap-1 ml-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 amber-dot"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 amber-dot"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 amber-dot"></span>
+            </div>
           </div>
         </div>
-      </section>
 
-      <footer class="mt-10 text-center text-xs text-slate-400">
-        Built into your FastAPI server. UI calls <code class="rounded bg-white/5 px-1 py-0.5">/v1/*</code> endpoints.
-      </footer>
+      </div>
     </main>
 
-    <div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 hidden -translate-x-1/2 rounded-xl border border-white/10 bg-black/60 px-4 py-2 text-sm text-slate-100 shadow-soft"></div>
+    <!-- Bottom Docked Chat Input Bar -->
+    <footer class="flex-shrink-0 z-20 border-t border-white/[0.08] bg-[#0A0A0F]/90 backdrop-blur-md px-4 sm:px-6 py-3.5">
+      <div class="max-w-3xl mx-auto">
+        <form id="chatForm" class="relative flex items-end gap-2 bg-[#12121A] border border-white/[0.08] focus-within:border-amber-500/50 rounded-xl p-2 transition-all">
+          
+          <!-- Attachment Button -->
+          <button type="button" id="btnAttach" class="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.05] rounded-lg transition-colors flex-shrink-0" title="Upload a document">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+          </button>
 
+          <!-- Textarea Input -->
+          <textarea
+            id="chatInput"
+            rows="1"
+            placeholder="Ask a question about policies, benefits, or procedures... (Enter to send)"
+            class="flex-1 max-h-36 resize-none bg-transparent text-sm text-[#FAFAFA] placeholder-zinc-500 px-2 py-2 outline-none border-none leading-relaxed"
+          ></textarea>
+
+          <!-- Circular Amber Send Button -->
+          <button
+            type="submit"
+            id="btnSend"
+            disabled
+            class="btn-amber w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm"
+            title="Send message"
+          >
+            <svg id="sendIcon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+            <svg id="sendSpinner" class="hidden w-4 h-4 animate-spin text-[#0A0A0F]" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </button>
+        </form>
+
+        <p class="text-[11px] text-center text-zinc-500 mt-2">
+          Company Assistant • Answers are grounded in internal documentation. Consult HR for official policies.
+        </p>
+      </div>
+    </footer>
+
+    <!-- Document Upload Modal -->
+    <div id="uploadModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+      <div class="relative w-full max-w-md bg-[#12121A] border border-white/[0.1] rounded-2xl p-6 shadow-2xl">
+        
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-[#1A1A24] border border-white/[0.08] text-amber-500 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-display font-semibold text-sm text-white">Upload Knowledge Document</h3>
+              <p class="text-xs text-zinc-400">PDF, Word (DOCX), or Markdown files</p>
+            </div>
+          </div>
+          <button id="btnCloseModal" class="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/[0.05] transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Upload Form -->
+        <form id="uploadForm" class="space-y-4">
+          
+          <!-- Drop Area -->
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1.5">Select Document</label>
+            <div class="relative border border-dashed border-white/[0.15] hover:border-amber-500/50 rounded-xl p-5 text-center cursor-pointer transition-colors bg-[#0A0A0F]/50 group">
+              <input type="file" id="modalFileInput" accept=".pdf,.docx,.txt,.md" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required />
+              <div class="space-y-1">
+                <svg class="mx-auto h-6 w-6 text-zinc-400 group-hover:text-amber-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <div class="text-xs text-zinc-300" id="fileChosenLabel">
+                  <span class="font-medium text-amber-400">Click to browse</span> or drag file here
+                </div>
+                <p class="text-[11px] text-zinc-500">PDF, DOCX, TXT, or MD up to 25MB</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selectors -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-zinc-300 mb-1">Department</label>
+              <select id="modalDept" class="w-full bg-[#0A0A0F] border border-white/[0.1] rounded-lg px-3 py-2 text-xs text-zinc-200 outline-none focus:border-amber-500/50">
+                <option value="hr" selected>HR</option>
+                <option value="engineering">Engineering</option>
+                <option value="finance">Finance</option>
+                <option value="legal">Legal</option>
+                <option value="operations">Operations</option>
+                <option value="marketing">Marketing</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-zinc-300 mb-1">Category</label>
+              <select id="modalCat" class="w-full bg-[#0A0A0F] border border-white/[0.1] rounded-lg px-3 py-2 text-xs text-zinc-200 outline-none focus:border-amber-500/50">
+                <option value="policy" selected>Policy</option>
+                <option value="handbook">Handbook</option>
+                <option value="benefits">Benefits</option>
+                <option value="onboarding">Onboarding</option>
+                <option value="procedure">Procedure</option>
+                <option value="faq">FAQ</option>
+                <option value="org-chart">Org Chart</option>
+                <option value="announcement">Announcement</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Status Message -->
+          <div id="modalUploadResult" class="hidden text-xs p-3 rounded-lg"></div>
+
+          <!-- Buttons -->
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" id="btnCancelModal" class="btn-subtle px-3 py-1.5 text-xs">
+              Cancel
+            </button>
+            <button type="submit" id="btnModalSubmit" class="btn-amber px-4 py-1.5 text-xs font-medium">
+              Upload & Index
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-xs font-medium bg-[#1A1A24] border border-white/[0.12] text-white shadow-xl"></div>
+
+    <!-- Core App Logic -->
     <script src="/static/app.js"></script>
   </body>
 </html>

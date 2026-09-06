@@ -1,0 +1,244 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+/* ==========================================================================
+   MINIMALIST DARK DESIGN SYSTEM
+   ========================================================================== */
+
+:root {
+  --background: #0a0a0f;
+  --background-alt: #12121a;
+  --foreground: #fafafa;
+  --muted: #1a1a24;
+  --muted-foreground: #71717a;
+  --accent: #f59e0b;
+  --accent-foreground: #0a0a0f;
+  --accent-muted: rgba(245, 158, 11, 0.15);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --card: rgba(26, 26, 36, 0.6);
+  --card-solid: #1a1a24;
+
+  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* Background Ambient Orbs for Atmospheric Warmth */
+.ambient-orb-top {
+  position: fixed;
+  top: -150px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 650px;
+  height: 350px;
+  background: radial-gradient(ellipse at center, rgba(245, 158, 11, 0.05) 0%, transparent 70%);
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-orb-bottom {
+  position: fixed;
+  bottom: -150px;
+  right: -50px;
+  width: 500px;
+  height: 400px;
+  background: radial-gradient(ellipse at center, rgba(245, 158, 11, 0.03) 0%, transparent 70%);
+  filter: blur(140px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Typography Classes */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Glass Card */
+.glass-card {
+  background: rgba(26, 26, 36, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 250ms ease-out;
+}
+
+.glass-card:hover {
+  border-color: var(--border-hover);
+}
+
+/* Question Suggestion Card */
+.prompt-card {
+  background: rgba(26, 26, 36, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 250ms ease-out;
+}
+
+.prompt-card:hover {
+  background: rgba(26, 26, 36, 0.85);
+  border-color: rgba(245, 158, 11, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(245, 158, 11, 0.1);
+}
+
+/* Amber Primary Button */
+.btn-amber {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 200ms ease-out;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-amber:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+.btn-amber:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-amber:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Subtle Secondary Button */
+.btn-subtle {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 200ms ease-out;
+  cursor: pointer;
+}
+
+.btn-subtle:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-hover);
+}
+
+.btn-subtle:active {
+  transform: scale(0.98);
+}
+
+/* Custom Minimalist Dark Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Accessibility Focus States */
+button:focus-visible,
+a:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+textarea:focus,
+input:focus {
+  outline: none !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.12) !important;
+}
+
+/* Markdown formatting inside assistant messages */
+.chat-markdown p {
+  margin-bottom: 0.75rem;
+  line-height: 1.65;
+  color: #e4e4e7;
+}
+
+.chat-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-markdown strong {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.chat-markdown ul, .chat-markdown ol {
+  margin: 0.5rem 0 0.85rem 1.25rem;
+  color: #e4e4e7;
+}
+
+.chat-markdown ul {
+  list-style-type: disc;
+}
+
+.chat-markdown ol {
+  list-style-type: decimal;
+}
+
+.chat-markdown li {
+  margin-bottom: 0.35rem;
+  line-height: 1.55;
+}
+
+.chat-markdown code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+}
+
+/* Typing pulse animation */
+@keyframes amberPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.amber-dot:nth-child(1) { animation: amberPulse 1.2s infinite 0.0s; }
+.amber-dot:nth-child(2) { animation: amberPulse 1.2s infinite 0.2s; }
+.amber-dot:nth-child(3) { animation: amberPulse 1.2s infinite 0.4s; }

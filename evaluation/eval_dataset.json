@@ -1,72 +1,92 @@
-﻿[
+[
   {
     "id": "eval-001",
-    "question": "What is Kubernetes and what problem does it solve?",
-    "expected_keywords": ["container", "orchestration", "scheduling", "scaling", "pods"],
-    "domain": "cloud-infrastructure",
+    "question": "What is our company's PTO policy?",
+    "expected_keywords": ["paid time off", "vacation", "days", "accrual", "request", "approval"],
+    "domain": "hr-policy",
+    "department": "hr",
+    "category": "policy",
     "difficulty": "easy"
   },
   {
     "id": "eval-002",
-    "question": "How does a CI/CD pipeline work?",
-    "expected_keywords": ["continuous integration", "continuous delivery", "build", "test", "deploy", "automation"],
-    "domain": "devops",
+    "question": "How do I enroll in the company health insurance plan?",
+    "expected_keywords": ["enrollment", "health", "insurance", "benefits", "open enrollment", "coverage"],
+    "domain": "benefits",
+    "department": "hr",
+    "category": "benefits",
     "difficulty": "easy"
   },
   {
     "id": "eval-003",
-    "question": "What is retrieval-augmented generation?",
-    "expected_keywords": ["retrieval", "generation", "context", "documents", "language model"],
-    "domain": "ai-ml",
+    "question": "What are the steps for onboarding a new hire?",
+    "expected_keywords": ["onboarding", "first day", "orientation", "equipment", "access", "training"],
+    "domain": "onboarding",
+    "department": "hr",
+    "category": "onboarding",
     "difficulty": "easy"
   },
   {
     "id": "eval-004",
-    "question": "Explain the difference between Docker and a virtual machine.",
-    "expected_keywords": ["kernel", "isolation", "overhead", "container", "hypervisor", "lightweight"],
-    "domain": "cloud-infrastructure",
-    "difficulty": "medium"
+    "question": "What is the company's remote work policy?",
+    "expected_keywords": ["remote", "work from home", "hybrid", "office", "schedule", "eligibility"],
+    "domain": "hr-policy",
+    "department": "hr",
+    "category": "policy",
+    "difficulty": "easy"
   },
   {
     "id": "eval-005",
-    "question": "What is BM25 and how does it rank documents?",
-    "expected_keywords": ["term frequency", "inverse document frequency", "saturation", "ranking", "keyword"],
-    "domain": "ai-ml",
+    "question": "How does the performance review process work?",
+    "expected_keywords": ["performance", "review", "evaluation", "goals", "feedback", "cycle", "rating"],
+    "domain": "hr-procedure",
+    "department": "hr",
+    "category": "procedure",
     "difficulty": "medium"
   },
   {
     "id": "eval-006",
-    "question": "What is infrastructure as code?",
-    "expected_keywords": ["terraform", "declarative", "version control", "automation", "provisioning"],
-    "domain": "devops",
-    "difficulty": "easy"
-  },
-  {
-    "id": "eval-007",
-    "question": "How does vector similarity search work?",
-    "expected_keywords": ["embedding", "cosine similarity", "distance", "nearest neighbor", "high-dimensional"],
-    "domain": "ai-ml",
+    "question": "What is the process for requesting a leave of absence?",
+    "expected_keywords": ["leave", "absence", "FMLA", "approval", "manager", "documentation"],
+    "domain": "hr-policy",
+    "department": "hr",
+    "category": "policy",
     "difficulty": "medium"
   },
   {
-    "id": "eval-008",
-    "question": "What is Prometheus and what is it used for?",
-    "expected_keywords": ["metrics", "time series", "scraping", "monitoring", "alerting"],
-    "domain": "devops",
+    "id": "eval-007",
+    "question": "Who do I contact for IT equipment issues in the Engineering department?",
+    "expected_keywords": ["IT", "support", "equipment", "helpdesk", "ticket", "laptop"],
+    "domain": "operations",
+    "department": "engineering",
+    "category": "faq",
     "difficulty": "easy"
   },
   {
+    "id": "eval-008",
+    "question": "What are the company's expense reimbursement guidelines?",
+    "expected_keywords": ["expense", "reimbursement", "receipt", "approval", "limit", "travel"],
+    "domain": "finance-policy",
+    "department": "finance",
+    "category": "policy",
+    "difficulty": "medium"
+  },
+  {
     "id": "eval-009",
-    "question": "Explain what MLOps means and its key practices.",
-    "expected_keywords": ["machine learning", "operations", "deployment", "monitoring", "versioning", "pipeline"],
-    "domain": "mlops",
+    "question": "What is the company's code of conduct and ethics policy?",
+    "expected_keywords": ["code of conduct", "ethics", "behavior", "compliance", "violation", "reporting"],
+    "domain": "legal-policy",
+    "department": "legal",
+    "category": "handbook",
     "difficulty": "medium"
   },
   {
     "id": "eval-010",
-    "question": "What is reciprocal rank fusion and why is it used in hybrid search?",
-    "expected_keywords": ["rank", "fusion", "combining", "scores", "multiple", "retrieval"],
-    "domain": "ai-ml",
+    "question": "How does the 401(k) matching program work and what is the vesting schedule?",
+    "expected_keywords": ["401k", "matching", "vesting", "contribution", "retirement", "percentage"],
+    "domain": "benefits",
+    "department": "hr",
+    "category": "benefits",
     "difficulty": "hard"
   }
 ]
